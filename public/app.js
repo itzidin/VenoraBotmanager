@@ -43,30 +43,58 @@ document.getElementById('commandType').addEventListener('change', (e) => {
 document.getElementById('addBotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const botData = Object.fromEntries(formData.entries());
-    
-    // Remove empty fields
-    Object.keys(botData).forEach(key => {
-        if (!botData[key]) {
-            delete botData[key];
-        }
-    });
+    const fileInput = document.getElementById('scriptFile');
     
     try {
-        const response = await fetch('/api/bots', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify(botData)
-        });
+        let response;
+        
+        // Check if a file was selected
+        if (fileInput.files.length > 0) {
+            // File upload path
+            response = await fetch('/api/upload', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData // FormData automatically includes the file
+            });
+        } else {
+            // Regular bot creation path
+            const botData = Object.fromEntries(formData.entries());
+            
+            // Remove empty fields
+            Object.keys(botData).forEach(key => {
+                if (!botData[key]) {
+                    delete botData[key];
+                }
+            });
+            
+            // Remove scriptFile field if it's empty
+            delete botData.scriptFile;
+            
+            if (!botData.script || !botData.cmd) {
+                alert('Please either upload a file or provide a script path and command');
+                return;
+            }
+            
+            response = await fetch('/api/bots', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(botData)
+            });
+        }
         
         if (!response.ok) {
             const error = await response.json();
             alert(error.error || 'Failed to add bot');
             return;
+        }
+        
+        const result = await response.json();
+        if (result.message) {
+            alert(result.message); // Show success message for file uploads
         }
         
         e.target.reset();
@@ -86,7 +114,7 @@ async function deleteBot(botKey) {
     try {
         const response = await fetch(`/api/bots/${botKey}`, {
             method: 'DELETE',
-            credentials: 'same-origin'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -144,7 +172,7 @@ function createTerminal(botKey) {
 async function updateBotList() {
     try {
         const response = await fetch('/api/bots', {
-            credentials: 'same-origin',
+            credentials: 'include',
             headers: {
                 'Accept': 'application/json'
             }
@@ -200,7 +228,7 @@ async function updateBotList() {
 async function startBot(botKey) {
     try {
         const response = await fetch(`/start/${botKey}`, {
-            credentials: 'same-origin'
+            credentials: 'include'
         });
         if (response.ok) {
             updateBotList();
@@ -214,7 +242,7 @@ async function startBot(botKey) {
 async function stopBot(botKey) {
     try {
         const response = await fetch(`/stop/${botKey}`, {
-            credentials: 'same-origin'
+            credentials: 'include'
         });
         if (response.ok) {
             updateBotList();
@@ -228,7 +256,7 @@ async function stopBot(botKey) {
 async function fetchLogs(botKey) {
     try {
         const response = await fetch(`/api/logs/${botKey}`, {
-            credentials: 'same-origin'
+            credentials: 'include'
         });
         const logs = await response.text();
         const terminal = terminals.get(botKey);

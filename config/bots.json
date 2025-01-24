@@ -1,2 +1,9 @@
 {
+  "test_script_1737709976589": {
+    "script": "uploads/1737709976585-test_script.py",
+    "cmd": "python3",
+    "type": "script",
+    "name": "test_script",
+    "description": "Uploaded script: test_script.py"
+  }
 }
