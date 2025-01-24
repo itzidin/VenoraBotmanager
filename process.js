@@ -7,22 +7,17 @@ const { Server } = require('socket.io');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 
-// --------------------------
-// CONFIG - EDIT AS NEEDED
-// --------------------------
 
-// Port for the Express web server
+// change the port as needed
 const PORT = 8080;
 
 // User credentials (username -> hashed password)
 const USERS = {
-  admin: '$2b$10$Rt5RwDyBx9tJd4JGEQYHtuN4J2aLlhrmNRn5RiZ.MtabW6juUO5Em' // password: admin123
+  admin: '$2b$10$Rt5RwDyBx9tJd4JGEQYHtuN4J2aLlhrmNRn5RiZ.MtabW6juUO5Em' // password: admin123 / password is bcrypted
 };
 
-// Session secret for cookies
 const SESSION_SECRET = 'your-secret-key-here';
 
-// Bot configuration with dynamic loading support
 const CONFIG_DIR = path.join(__dirname, "config");
 if (!fs.existsSync(CONFIG_DIR)) {
   fs.mkdirSync(CONFIG_DIR, { recursive: true });
@@ -30,7 +25,6 @@ if (!fs.existsSync(CONFIG_DIR)) {
 
 const BOT_CONFIG_FILE = path.join(CONFIG_DIR, "bots.json");
 let BOTS = {
-  // Example bots with cross-platform paths
   example_py: {
     script: "./test_bots/example.py",
     cmd: "python3",
@@ -47,14 +41,12 @@ let BOTS = {
   }
 };
 
-// Load bot configuration from file if it exists
 function loadBotConfig() {
   try {
     if (fs.existsSync(BOT_CONFIG_FILE)) {
       const configData = fs.readFileSync(BOT_CONFIG_FILE, 'utf8');
       BOTS = JSON.parse(configData);
     } else {
-      // Save initial configuration
       saveBotConfig();
     }
   } catch (error) {
@@ -62,7 +54,6 @@ function loadBotConfig() {
   }
 }
 
-// Save current bot configuration to file
 function saveBotConfig() {
   try {
     fs.writeFileSync(BOT_CONFIG_FILE, JSON.stringify(BOTS, null, 2));
@@ -71,32 +62,23 @@ function saveBotConfig() {
   }
 }
 
-// Initialize configuration
 loadBotConfig();
 
-// Directory to store logs
 const LOG_DIR = path.join(__dirname, "logs");
 
-// If true, automatically start all bots on server boot
 const AUTO_START = true;
 
 
-// --------------------------
-// INTERNALS
-// --------------------------
 if (!fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true });
 }
 
-// We'll keep track of child processes in a dictionary
-// { botKey: { proc: ChildProcess, logFile: WriteStream } }
 const processMap = {};
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Middleware setup
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
@@ -106,10 +88,8 @@ app.use(session({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Create static middleware once
 const staticMiddleware = express.static('public');
 
-// Serve static files only for authenticated users
 app.use((req, res, next) => {
   if (req.session && req.session.user) {
     return staticMiddleware(req, res, next);
@@ -120,7 +100,6 @@ app.use((req, res, next) => {
   }
 });
 
-// Authentication middleware
 function authRequired(req, res, next) {
   if (req.session && req.session.user) {
     return next();
@@ -128,19 +107,12 @@ function authRequired(req, res, next) {
   res.redirect('/login');
 }
 
-// Socket.io connection handling
 io.on('connection', (socket) => {
   socket.on('joinBot', (botKey) => {
     socket.join(botKey);
   });
 });
 
-// --------------------------
-// ROUTES
-// --------------------------
-
-// API Routes
-// Add new bot
 app.post('/api/bots', authRequired, (req, res) => {
     const { id, script, cmd, name, description } = req.body;
     
@@ -163,7 +135,6 @@ app.post('/api/bots', authRequired, (req, res) => {
     res.json({ success: true, bot: BOTS[id] });
 });
 
-// Delete bot
 app.delete('/api/bots/:botKey', authRequired, (req, res) => {
     const botKey = req.params.botKey;
     
@@ -171,7 +142,6 @@ app.delete('/api/bots/:botKey', authRequired, (req, res) => {
         return res.status(404).json({ error: "Bot not found" });
     }
 
-    // Stop bot if running
     if (processMap[botKey]) {
         const { proc, logFile } = processMap[botKey];
         proc.kill();
@@ -183,8 +153,6 @@ app.delete('/api/bots/:botKey', authRequired, (req, res) => {
     saveBotConfig();
     res.json({ success: true });
 });
-
-// Get bot list with status
 app.get('/api/bots', authRequired, (req, res) => {
     const botStatus = {};
     Object.keys(BOTS).forEach(key => {
@@ -211,7 +179,6 @@ app.get('/api/logs/:botKey', authRequired, (req, res) => {
     res.send(content);
 });
 
-// Login routes
 app.get('/login', (req, res) => {
   if (req.session.user) {
     return res.redirect('/');
@@ -263,9 +230,7 @@ app.get('/logout', (req, res) => {
   res.redirect('/login');
 });
 
-// Protected routes
 app.get('/', authRequired, (req, res) => {
-  // Basic HTML listing each bot, showing start/stop/logs
   const rows = Object.keys(BOTS).map(botKey => {
     const isRunning = !!processMap[botKey];
     return `
@@ -332,32 +297,24 @@ app.get('/start/:botKey', authRequired, (req, res) => {
   const logFilePath = path.join(LOG_DIR, `${botKey}.log`);
   const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
 
-  // Normalize and resolve paths
   function normalizePath(inputPath) {
     if (!inputPath) return '';
     
-    // Convert Windows backslashes to forward slashes
     const normalized = inputPath.replace(/\\/g, '/');
     
-    // Check if it's a Windows absolute path (e.g., C:/Users/...)
     const isWindowsAbsolute = /^[A-Za-z]:/i.test(normalized);
     
     if (isWindowsAbsolute) {
-      // For Windows absolute paths, just normalize slashes
       return normalized;
     } else if (path.isAbsolute(normalized)) {
-      // For Unix absolute paths
       return normalized;
     } else {
-      // For relative paths
       return path.join(__dirname, normalized);
     }
   }
 
-  // Handle script path
   const scriptPath = script ? normalizePath(script) : '';
   
-  // Determine working directory
   let workingDir;
   if (workDir) {
     workingDir = normalizePath(workDir);
@@ -367,7 +324,6 @@ app.get('/start/:botKey', authRequired, (req, res) => {
     workingDir = __dirname;
   }
 
-  // Parse command and arguments
   let command, args;
   if (type === 'npm') {
     command = 'npm';
@@ -384,17 +340,15 @@ app.get('/start/:botKey', authRequired, (req, res) => {
     args = script ? [scriptPath] : [];
   }
 
-  // Spawn the process
   console.log(`[${botKey}] Spawning process:`, { command, args, workingDir, type });
   const child = spawn(command, args, {
     cwd: workingDir,
     detached: false,
-    shell: type === 'custom' // Enable shell for custom commands
+    shell: type === 'custom'
   });
   
   console.log(`[${botKey}] Process spawned with PID:`, child.pid);
 
-  // Pipe output to log
   child.stdout.on('data', data => {
     console.log(`[${botKey}] stdout:`, data.toString());
     logStream.write(data);
@@ -413,7 +367,6 @@ app.get('/start/:botKey', authRequired, (req, res) => {
     io.to(botKey).emit('status', { status: 'stopped', code, botKey });
   });
 
-  // Store reference
   processMap[botKey] = {
     proc: child,
     logFile: logStream
@@ -447,7 +400,6 @@ app.get('/logs/:botKey', authRequired, (req, res) => {
     return res.send("No logs yet.");
   }
 
-  // We'll read the file and display it (auto-refresh every 2 seconds)
   const content = fs.readFileSync(logFilePath, "utf-8");
   const html = `
   <!DOCTYPE html>
@@ -469,28 +421,21 @@ app.get('/logs/:botKey', authRequired, (req, res) => {
   res.send(html);
 });
 
-// Optionally auto-start all bots on server boot
 function autoStartAllBots() {
   Object.keys(BOTS).forEach(botKey => {
     if (!processMap[botKey]) {
-      // Same logic as /start
       const { cmd, script, type = 'script', workDir } = BOTS[botKey];
       const logFilePath = path.join(LOG_DIR, `${botKey}.log`);
       const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
 
-      // Normalize and resolve paths using the same function as /start route
       function normalizePath(inputPath) {
         if (!inputPath) return '';
-        // Convert Windows backslashes to forward slashes
         const normalized = inputPath.replace(/\\/g, '/');
-        // Resolve absolute or relative path
         return path.isAbsolute(normalized) ? normalized : path.join(__dirname, normalized);
       }
 
-      // Handle script path
       const scriptPath = script ? normalizePath(script) : '';
       
-      // Determine working directory
       let workingDir;
       if (workDir) {
         workingDir = normalizePath(workDir);
@@ -500,7 +445,6 @@ function autoStartAllBots() {
         workingDir = __dirname;
       }
 
-      // Parse command and arguments
       let command, args;
       if (type === 'npm') {
         command = 'npm';
@@ -517,12 +461,11 @@ function autoStartAllBots() {
         args = script ? [scriptPath] : [];
       }
 
-      // Spawn the process
       console.log(`[${botKey}] Spawning process:`, { command, args, workingDir, type });
       const child = spawn(command, args, {
         cwd: workingDir,
         detached: false,
-        shell: type === 'custom' // Enable shell for custom commands
+        shell: type === 'custom'
       });
       child.stdout.on('data', data => {
         logStream.write(data);
@@ -544,7 +487,6 @@ function autoStartAllBots() {
   });
 }
 
-// Start the server
 server.listen(PORT, () => {
   console.log(`Bot manager listening at http://0.0.0.0:${PORT}`);
   if (AUTO_START) {
