@@ -74,8 +74,41 @@ body {
     font-style: italic;
 }
 
-.script-field, .working-dir-field {
+.script-field, .working-dir-field, .file-upload-field {
     transition: all 0.3s ease;
+}
+
+/* Card styles for method separation */
+.card {
+    background-color: #2a2a2a !important;
+    border: 1px solid #444 !important;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: #222 !important;
+    padding: 0.75rem 1rem;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+/* File upload styling */
+.file-upload-field input[type="file"] {
+    border: 1px dashed #555;
+    padding: 0.75rem;
+    cursor: pointer;
+}
+
+.file-upload-field input[type="file"]:hover {
+    border-color: #666;
+    background-color: #222;
+}
+
+.file-upload-field .text-muted {
+    color: #888 !important;
+    font-size: 0.85em;
 }
 
 /* Custom scrollbar for terminal */

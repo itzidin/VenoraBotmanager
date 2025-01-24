@@ -17,21 +17,27 @@ document.getElementById('commandType').addEventListener('change', (e) => {
     const commandLabel = document.querySelector('.command-label');
     const commandInput = document.querySelector('input[name="cmd"]');
 
+    const fileUploadCard = document.querySelector('.file-upload-field').closest('.card');
+    const scriptPathCard = document.querySelector('.script-field').closest('.card');
+    
     // Show/hide fields based on command type
     if (type === 'script') {
-        scriptField.style.display = 'block';
+        scriptPathCard.style.display = 'block';
+        fileUploadCard.style.display = 'block';
         workingDirField.style.display = 'none';
         commandLabel.textContent = 'Command';
         commandInput.placeholder = 'e.g., python3 or node';
-        scriptField.querySelector('input').required = true;
+        scriptField.querySelector('input').required = false; // Not required since we have file upload option
     } else if (type === 'custom') {
-        scriptField.style.display = 'none';
+        scriptPathCard.style.display = 'none';
+        fileUploadCard.style.display = 'none';
         workingDirField.style.display = 'block';
         commandLabel.textContent = 'Custom Command';
         commandInput.placeholder = 'e.g., python3 -m http.server 8000';
         scriptField.querySelector('input').required = false;
     } else if (type === 'npm') {
-        scriptField.style.display = 'none';
+        scriptPathCard.style.display = 'none';
+        fileUploadCard.style.display = 'none';
         workingDirField.style.display = 'block';
         commandLabel.textContent = 'NPM Script';
         commandInput.placeholder = 'e.g., start or dev';
@@ -43,35 +49,68 @@ document.getElementById('commandType').addEventListener('change', (e) => {
 document.getElementById('addBotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const fileInput = document.getElementById('scriptFile');
+    const fileInput = document.querySelector('input[name="scriptFile"]');
+    const scriptPath = formData.get('script');
+    const command = formData.get('cmd');
+    
+    // Validate input methods
+    if (fileInput.files.length > 0 && scriptPath) {
+        alert('Please use either file upload or script path, not both.');
+        return;
+    }
+    
+    if (fileInput.files.length === 0 && !scriptPath) {
+        alert('Please either upload a file or provide a script path.');
+        return;
+    }
     
     try {
         let response;
         
-        // Check if a file was selected
+        // Handle file upload
         if (fileInput.files.length > 0) {
-            // File upload path
+            const file = fileInput.files[0];
+            
+            // Validate file type
+            const allowedTypes = ['.py', '.js', '.sh'];
+            const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            if (!allowedTypes.includes(fileExt)) {
+                alert('Only .py, .js, and .sh files are allowed.');
+                return;
+            }
+            
+            // Add auto-selected command based on file type
+            switch (fileExt) {
+                case '.py':
+                    formData.append('cmd', 'python3');
+                    break;
+                case '.js':
+                    formData.append('cmd', 'node');
+                    break;
+                case '.sh':
+                    formData.append('cmd', 'bash');
+                    break;
+            }
+            
+            // Upload file
             response = await fetch('/api/upload', {
                 method: 'POST',
                 credentials: 'include',
-                body: formData // FormData automatically includes the file
+                body: formData
             });
         } else {
-            // Regular bot creation path
+            // Handle script path method
             const botData = Object.fromEntries(formData.entries());
             
-            // Remove empty fields
+            // Remove empty fields and file input
             Object.keys(botData).forEach(key => {
-                if (!botData[key]) {
+                if (!botData[key] || key === 'scriptFile') {
                     delete botData[key];
                 }
             });
             
-            // Remove scriptFile field if it's empty
-            delete botData.scriptFile;
-            
             if (!botData.script || !botData.cmd) {
-                alert('Please either upload a file or provide a script path and command');
+                alert('Please provide both script path and command when using Method 1.');
                 return;
             }
             
