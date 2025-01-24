@@ -1,0 +1,15 @@
+{
+  "name": "bot-manager",
+  "version": "1.0.0",
+  "description": "Bot Manager with real-time monitoring",
+  "main": "process.js",
+  "scripts": {
+    "start": "node process.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "express-session": "^1.18.0",
+    "bcrypt": "^5.1.1"
+  }
+}

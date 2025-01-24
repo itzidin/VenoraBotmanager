@@ -1,0 +1,97 @@
+/* Dark theme styles */
+body {
+    min-height: 100vh;
+}
+
+.terminal {
+    background-color: #1a1a1a;
+    color: #00ff00; /* Keep this for the terminal green text */
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    height: 30vh;
+    overflow-y: auto;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.terminal-container {
+    margin-bottom: 20px;
+}
+
+.bot-card {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.bot-card .status {
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    color: #aaa; /* Neutral gray to improve readability */
+}
+
+.bot-card .status.running {
+    color: #32cd32; /* Slightly muted green for better blending */
+}
+
+.bot-card .status.stopped {
+    color: #ff5555; /* Softer red for better contrast */
+}
+
+.bot-card .actions {
+    display: flex;
+    gap: 10px;
+}
+
+.bot-card .description {
+    font-size: 0.9em;
+    color: #bbb; /* Softer gray for easier readability */
+    margin: 5px 0;
+}
+
+.form-control, .form-select {
+    border-color: #444;
+    background-color: #1a1a1a;
+    color: #eee; /* White-gray for readable text */
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #666;
+    box-shadow: 0 0 0 0.25rem rgba(100, 100, 100, 0.5); /* Softer shadow for focus */
+}
+
+.form-label {
+    color: #eee;
+    margin-bottom: 0.3rem;
+}
+
+.form-control::placeholder {
+    color: #777; /* Light gray for subtle placeholders */
+    font-style: italic;
+}
+
+.script-field, .working-dir-field {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar for terminal */
+.terminal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminal::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.terminal::-webkit-scrollbar-thumb {
+    background: #555; /* Slightly brighter for better visibility */
+    border-radius: 4px;
+}
+
+.terminal::-webkit-scrollbar-thumb:hover {
+    background: #666; /* Brighter hover state */
+}
