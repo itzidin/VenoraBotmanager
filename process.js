@@ -6,6 +6,41 @@ const http = require('http');
 const { Server } = require('socket.io');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+
+// Set up file upload configuration
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOAD_DIR);
+  },
+  filename: (req, file, cb) => {
+    // Sanitize filename and ensure unique names
+    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${Date.now()}-${sanitizedName}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow only .py, .js, and .sh files
+    const allowedExtensions = ['.py', '.js', '.sh'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedExtensions.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .py, .js, and .sh files are allowed'));
+    }
+  }
+});
 
 
 // change the port as needed
@@ -111,6 +146,53 @@ io.on('connection', (socket) => {
   socket.on('joinBot', (botKey) => {
     socket.join(botKey);
   });
+});
+
+// Handle file upload and bot creation
+app.post('/api/upload', authRequired, upload.single('scriptFile'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const fileExt = path.extname(req.file.originalname).toLowerCase();
+    let defaultCmd;
+    switch (fileExt) {
+      case '.py':
+        defaultCmd = 'python3';
+        break;
+      case '.js':
+        defaultCmd = 'node';
+        break;
+      case '.sh':
+        defaultCmd = 'bash';
+        break;
+      default:
+        return res.status(400).json({ error: "Unsupported file type" });
+    }
+
+    // Create unique bot ID using filename (without extension) and timestamp
+    const botId = `${path.basename(req.file.originalname, fileExt)}_${Date.now()}`;
+
+    // Create bot entry
+    BOTS[botId] = {
+      script: path.join('uploads', req.file.filename),
+      cmd: defaultCmd,
+      type: 'script',
+      name: path.basename(req.file.originalname, fileExt),
+      description: `Uploaded script: ${req.file.originalname}`
+    };
+
+    saveBotConfig();
+    res.json({ 
+      success: true, 
+      bot: BOTS[botId],
+      message: `Bot "${botId}" created successfully`
+    });
+  } catch (error) {
+    console.error('Error handling file upload:', error);
+    res.status(500).json({ error: error.message || "File upload failed" });
+  }
 });
 
 app.post('/api/bots', authRequired, (req, res) => {

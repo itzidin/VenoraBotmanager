@@ -74,8 +74,22 @@ body {
     font-style: italic;
 }
 
-.script-field, .working-dir-field, .file-upload-field {
+.script-field, .working-dir-field, .file-upload-field, .method-section {
     transition: all 0.3s ease;
+}
+
+.form-check {
+    margin-bottom: 0.5rem;
+}
+
+.form-check-input {
+    background-color: #444;
+    border-color: #666;
+}
+
+.form-check-input:checked {
+    background-color: #0af;
+    border-color: #0af;
 }
 
 /* Card styles for method separation */

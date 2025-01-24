@@ -5,5 +5,18 @@
     "type": "script",
     "name": "test_script",
     "description": "Uploaded script: test_script.py"
+  },
+  "test_bot_1": {
+    "script": "./test_bot_2.py",
+    "cmd": "python3",
+    "name": "Test Bot 1",
+    "description": "Test bot using script path method"
+  },
+  "test_bot_2_1737712558116": {
+    "script": "uploads/1737712558114-test_bot_2.py",
+    "cmd": "python3",
+    "type": "script",
+    "name": "test_bot_2",
+    "description": "Uploaded script: test_bot_2.py"
   }
 }

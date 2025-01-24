@@ -9,66 +9,57 @@ socket.on('connect', () => {
     console.log('Socket.io connected');
 });
 
-// Command type change handler
-document.getElementById('commandType').addEventListener('change', (e) => {
-    const type = e.target.value;
-    const scriptField = document.querySelector('.script-field');
-    const workingDirField = document.querySelector('.working-dir-field');
-    const commandLabel = document.querySelector('.command-label');
-    const commandInput = document.querySelector('input[name="cmd"]');
+// Method selection handler
+document.querySelectorAll('input[name="addMethod"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        const scriptPathSection = document.getElementById('scriptPathSection');
+        const fileUploadSection = document.getElementById('fileUploadSection');
+        const scriptInput = document.querySelector('input[name="script"]');
+        const cmdInput = document.querySelector('input[name="cmd"]');
+        const fileInput = document.querySelector('input[name="scriptFile"]');
 
-    const fileUploadCard = document.querySelector('.file-upload-field').closest('.card');
-    const scriptPathCard = document.querySelector('.script-field').closest('.card');
-    
-    // Show/hide fields based on command type
-    if (type === 'script') {
-        scriptPathCard.style.display = 'block';
-        fileUploadCard.style.display = 'block';
-        workingDirField.style.display = 'none';
-        commandLabel.textContent = 'Command';
-        commandInput.placeholder = 'e.g., python3 or node';
-        scriptField.querySelector('input').required = false; // Not required since we have file upload option
-    } else if (type === 'custom') {
-        scriptPathCard.style.display = 'none';
-        fileUploadCard.style.display = 'none';
-        workingDirField.style.display = 'block';
-        commandLabel.textContent = 'Custom Command';
-        commandInput.placeholder = 'e.g., python3 -m http.server 8000';
-        scriptField.querySelector('input').required = false;
-    } else if (type === 'npm') {
-        scriptPathCard.style.display = 'none';
-        fileUploadCard.style.display = 'none';
-        workingDirField.style.display = 'block';
-        commandLabel.textContent = 'NPM Script';
-        commandInput.placeholder = 'e.g., start or dev';
-        scriptField.querySelector('input').required = false;
-    }
+        if (e.target.value === 'scriptPath') {
+            scriptPathSection.style.display = 'block';
+            fileUploadSection.style.display = 'none';
+            scriptInput.required = true;
+            cmdInput.required = true;
+            fileInput.required = false;
+            fileInput.value = ''; // Clear file input when switching to script path
+        } else {
+            scriptPathSection.style.display = 'none';
+            fileUploadSection.style.display = 'block';
+            scriptInput.required = false;
+            cmdInput.required = false;
+            fileInput.required = true;
+            scriptInput.value = ''; // Clear script path when switching to file upload
+            cmdInput.value = ''; // Clear command when switching to file upload
+        }
+    });
 });
 
 // Add new bot form handler
 document.getElementById('addBotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    const selectedMethod = formData.get('addMethod');
     const fileInput = document.querySelector('input[name="scriptFile"]');
     const scriptPath = formData.get('script');
     const command = formData.get('cmd');
     
-    // Validate input methods
-    if (fileInput.files.length > 0 && scriptPath) {
-        alert('Please use either file upload or script path, not both.');
+    // Validate based on selected method
+    if (selectedMethod === 'scriptPath' && (!scriptPath || !command)) {
+        alert('Please provide both script path and command when using Script Path method.');
         return;
-    }
-    
-    if (fileInput.files.length === 0 && !scriptPath) {
-        alert('Please either upload a file or provide a script path.');
+    } else if (selectedMethod === 'fileUpload' && !fileInput.files.length) {
+        alert('Please select a file when using File Upload method.');
         return;
     }
     
     try {
         let response;
         
-        // Handle file upload
-        if (fileInput.files.length > 0) {
+        // Handle based on selected method
+        if (selectedMethod === 'fileUpload') {
             const file = fileInput.files[0];
             
             // Validate file type
@@ -95,24 +86,16 @@ document.getElementById('addBotForm').addEventListener('submit', async (e) => {
             // Upload file
             response = await fetch('/api/upload', {
                 method: 'POST',
-                credentials: 'include',
+                credentials: 'same-origin',
                 body: formData
             });
         } else {
             // Handle script path method
             const botData = Object.fromEntries(formData.entries());
             
-            // Remove empty fields and file input
-            Object.keys(botData).forEach(key => {
-                if (!botData[key] || key === 'scriptFile') {
-                    delete botData[key];
-                }
-            });
-            
-            if (!botData.script || !botData.cmd) {
-                alert('Please provide both script path and command when using Method 1.');
-                return;
-            }
+            // Remove unnecessary fields
+            delete botData.scriptFile;
+            delete botData.addMethod;
             
             response = await fetch('/api/bots', {
                 method: 'POST',
@@ -120,7 +103,7 @@ document.getElementById('addBotForm').addEventListener('submit', async (e) => {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                credentials: 'include',
+                credentials: 'same-origin',
                 body: JSON.stringify(botData)
             });
         }
@@ -153,7 +136,7 @@ async function deleteBot(botKey) {
     try {
         const response = await fetch(`/api/bots/${botKey}`, {
             method: 'DELETE',
-            credentials: 'include'
+            credentials: 'same-origin'
         });
         
         if (!response.ok) {
@@ -211,7 +194,7 @@ function createTerminal(botKey) {
 async function updateBotList() {
     try {
         const response = await fetch('/api/bots', {
-            credentials: 'include',
+            credentials: 'same-origin',
             headers: {
                 'Accept': 'application/json'
             }
@@ -267,7 +250,7 @@ async function updateBotList() {
 async function startBot(botKey) {
     try {
         const response = await fetch(`/start/${botKey}`, {
-            credentials: 'include'
+            credentials: 'same-origin'
         });
         if (response.ok) {
             updateBotList();
@@ -281,7 +264,7 @@ async function startBot(botKey) {
 async function stopBot(botKey) {
     try {
         const response = await fetch(`/stop/${botKey}`, {
-            credentials: 'include'
+            credentials: 'same-origin'
         });
         if (response.ok) {
             updateBotList();
@@ -295,7 +278,7 @@ async function stopBot(botKey) {
 async function fetchLogs(botKey) {
     try {
         const response = await fetch(`/api/logs/${botKey}`, {
-            credentials: 'include'
+            credentials: 'same-origin'
         });
         const logs = await response.text();
         const terminal = terminals.get(botKey);

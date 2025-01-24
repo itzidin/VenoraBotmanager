@@ -40,33 +40,39 @@
                                     <option value="npm">NPM Script</option>
                                 </select>
                             </div>
-                            <div class="card bg-dark border-secondary mb-3">
-                                <div class="card-header border-secondary">
-                                    <h6 class="mb-0 text-white">Method 1: Script Path</h6>
+                            <div class="mb-3">
+                                <label class="form-label text-light">Add Bot Method</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="addMethod" id="scriptPathMethod" value="scriptPath" checked>
+                                    <label class="form-check-label text-light" for="scriptPathMethod">
+                                        Script Path
+                                    </label>
                                 </div>
-                                <div class="card-body">
-                                    <div class="mb-3 script-field">
-                                        <label class="form-label text-light">Script Path</label>
-                                        <input type="text" class="form-control bg-dark text-light" name="script" placeholder="e.g., ./scripts/mybot.py">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label text-light command-label">Command</label>
-                                        <input type="text" class="form-control bg-dark text-light" name="cmd" placeholder="e.g., python3 or node">
-                                    </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="addMethod" id="fileUploadMethod" value="fileUpload">
+                                    <label class="form-check-label text-light" for="fileUploadMethod">
+                                        Upload File
+                                    </label>
                                 </div>
                             </div>
-                            
-                            <div class="card bg-dark border-secondary mb-3">
-                                <div class="card-header border-secondary">
-                                    <h6 class="mb-0 text-white">Method 2: File Upload</h6>
+
+                            <div id="scriptPathSection" class="method-section">
+                                <div class="mb-3 script-field">
+                                    <label class="form-label text-light">Script Path</label>
+                                    <input type="text" class="form-control bg-dark text-light" name="script" placeholder="e.g., ./scripts/mybot.py">
                                 </div>
-                                <div class="card-body">
-                                    <div class="mb-3 file-upload-field">
-                                        <label class="form-label text-light">Upload Single File</label>
-                                        <input type="file" class="form-control bg-dark text-light" name="scriptFile" accept=".py,.js,.sh">
-                                        <small class="text-muted d-block mt-1">Supported: .py, .js, .sh (Max: 5MB)</small>
-                                        <small class="text-muted d-block">Command will be auto-selected based on file type</small>
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-light command-label">Command</label>
+                                    <input type="text" class="form-control bg-dark text-light" name="cmd" placeholder="e.g., python3 or node">
+                                </div>
+                            </div>
+
+                            <div id="fileUploadSection" class="method-section" style="display: none;">
+                                <div class="mb-3 file-upload-field">
+                                    <label class="form-label text-light">Upload Single File</label>
+                                    <input type="file" class="form-control bg-dark text-light" name="scriptFile" accept=".py,.js,.sh">
+                                    <small class="text-muted d-block mt-1">Supported: .py, .js, .sh (Max: 5MB)</small>
+                                    <small class="text-muted d-block">Command will be auto-selected based on file type</small>
                                 </div>
                             </div>
                             <div class="mb-3 working-dir-field" style="display: none;">
