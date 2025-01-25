@@ -30,8 +30,8 @@ Venora Bot Manager is a powerful, web-based application for managing and monitor
 
 1. **Clone the Repository**:
    ```bash
-   git clone <repository_url>
-   cd bot-manager
+   git clone https://github.com/itzidin/VenoraBotmanager
+   cd VenoraBotmanager
    ```
 
 2. **Install Dependencies**:
